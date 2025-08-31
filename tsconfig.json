@@ -1,0 +1,15 @@
+{
+	"compilerOptions": {
+		"strict": true,
+		"module": "es2022",
+		"target": "es2022",
+		"moduleResolution": "bundler",
+		"noEmit": true,
+		"allowImportingTsExtensions": true,
+		"forceConsistentCasingInFileNames": true,
+		"baseUrl": ".",
+		"lib": ["ES2020", "DOM"]
+	},
+	"include": ["src/**/*"],
+	"exclude": ["node_modules"]
+}

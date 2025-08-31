@@ -1,0 +1,26 @@
+{
+  "name": "lucid-ws-server",
+  "version": "1.0.0",
+  "description": "A simple socket io server to keep track of the active user count",
+  "license": "MIT",
+  "author": "sanoojes",
+  "type": "module",
+  "main": "main.ts",
+  "scripts": {
+    "dev": "deno -A --env-file --watch main.ts",
+    "start": "deno -A --env-file main.ts"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "http": "^0.0.1-security",
+    "jose": "^6.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "redis": "^5.8.2",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19"
+  }
+}
