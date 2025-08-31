@@ -10,6 +10,6 @@
 		"baseUrl": ".",
 		"lib": ["ES2020", "DOM"]
 	},
-	"include": ["src/**/*"],
+	"include": ["**/*"],
 	"exclude": ["node_modules"]
 }
