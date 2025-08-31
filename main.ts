@@ -6,7 +6,6 @@ import { createClient } from "redis";
 import { Server } from "socket.io";
 import { signToken, verifyToken } from "./lib/jwt.ts";
 import logger from "./lib/logger.ts";
-import "dotenv/config";
 
 type AnalyticType = "theme" | "lyrics_extension" | "glassify_theme";
 
