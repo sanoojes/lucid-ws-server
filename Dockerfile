@@ -7,7 +7,7 @@ WORKDIR /app
 # Copy source
 COPY . .
 
-RUN deno cache main.ts
+RUN deno install
 
 ARG PORT
 EXPOSE ${PORT:-8080}
