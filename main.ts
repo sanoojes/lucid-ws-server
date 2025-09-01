@@ -26,6 +26,7 @@ const KEYS: Record<AnalyticType, string> = {
 
 const CORS_OPTIONS = {
 	origin: [
+		"https://xpui.app.spotify.com",
 		"https://lyrics.lucid.sanooj.is-a.dev",
 		"https://lucid.sanooj.is-a.dev",
 	],
