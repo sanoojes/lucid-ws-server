@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 
-import { createServer } from "node:https";
+import { createServer } from "node:http";
 import cors from "cors";
 import express from "express";
 import { createClient } from "redis";
@@ -25,10 +25,14 @@ const KEYS: Record<AnalyticType, string> = {
 };
 
 const CORS_OPTIONS = {
-	origin: "*",
-	allowedHeaders: "*",
+	origin: [
+		"https://lyrics.lucid.sanooj.is-a.dev",
+		"https://lucid.sanooj.is-a.dev",
+	],
+	methods: ["GET", "POST"],
+	allowedHeaders: ["Content-Type", "Authorization"],
 	credentials: true,
-	maxAge: 1000 * 60 * 60,
+	maxAge: 60 * 60,
 };
 
 const app = express();
@@ -54,7 +58,7 @@ try {
 	await client.connect();
 } catch (err) {
 	logger.error("Redis Client Connection Failed", err);
-	process.exit(1);
+	Deno.exit(1);
 }
 
 // ====================== PUBLIC NAMESPACE ======================
