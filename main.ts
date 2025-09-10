@@ -5,7 +5,7 @@ import cors from "cors";
 import express from "express";
 import { createClient } from "redis";
 import { Server } from "socket.io";
-import { signToken, verifyToken } from "./lib/jwt.ts";
+// import { signToken, verifyToken } from "./lib/jwt.ts";
 import logger from "./lib/logger.ts";
 
 type AnalyticType = "theme" | "lyrics_extension" | "glassify_theme";
@@ -92,24 +92,24 @@ publicNamespace.on("connection", (socket) => {
 // ====================== PRIVATE NAMESPACE ======================
 const privateNamespace = io.of("/ws/users");
 
-privateNamespace.use((socket, next) => {
-	try {
-		const token = socket.handshake.auth?.token;
-		if (!token) {
-			return next(new Error("Authentication token missing."));
-		}
+// privateNamespace.use((socket, next) => {
+// 	try {
+// 		const token = socket.handshake.auth?.token;
+// 		if (!token) {
+// 			return next(new Error("Authentication token missing."));
+// 		}
 
-		const payload = verifyToken(token);
-		if (!payload) {
-			return next(new Error("Authentication error"));
-		}
+// 		const payload = verifyToken(token);
+// 		if (!payload) {
+// 			return next(new Error("Authentication error"));
+// 		}
 
-		socket.data.user = payload;
-		next();
-	} catch (err) {
-		next(new Error("Authentication error"));
-	}
-});
+// 		socket.data.user = payload;
+// 		next();
+// 	} catch {
+// 		next(new Error("Authentication error"));
+// 	}
+// });
 
 privateNamespace.on("connection", async (socket) => {
 	const userType: AnalyticType =
@@ -132,48 +132,48 @@ app.get("/ping", (_, res) => {
 	res.status(200).send("pong!");
 });
 
-app.get("/token", async (req, res) => {
-	const authHeader = req.headers.authorization;
+// app.get("/token", async (req, res) => {
+// 	const authHeader = req.headers.authorization;
 
-	if (!authHeader?.startsWith("Bearer ")) {
-		return res.status(400).json({ error: "Spotify token missing" });
-	}
+// 	if (!authHeader?.startsWith("Bearer ")) {
+// 		return res.status(400).json({ error: "Spotify token missing" });
+// 	}
 
-	const spotifyToken = authHeader.split(" ")[1];
+// 	const spotifyToken = authHeader.split(" ")[1];
 
-	try {
-		const response = await fetch("https://api.spotify.com/v1/me", {
-			headers: { Authorization: `Bearer ${spotifyToken}` },
-		});
+// 	try {
+// 		const response = await fetch("https://api.spotify.com/v1/me", {
+// 			headers: { Authorization: `Bearer ${spotifyToken}` },
+// 		});
 
-		if (!response.ok) {
-			return res.status(401).json({ error: "Invalid Spotify token" });
-		}
+// 		if (!response.ok) {
+// 			return res.status(401).json({ error: "Invalid Spotify token" });
+// 		}
 
-		const spotifyUser: { id?: string; email?: string } =
-			(await response.json()) as any;
+// 		const spotifyUser: { id?: string; email?: string } =
+// 			(await response.json()) as any;
 
-		if (!spotifyUser.id || !spotifyUser.email)
-			return res.status(501).json({ error: "Failed to verify user" });
+// 		if (!spotifyUser.id || !spotifyUser.email)
+// 			return res.status(501).json({ error: "Failed to verify user" });
 
-		const token = await signToken(
-			{
-				userId: spotifyUser.id,
-				email: spotifyUser.email,
-			},
-			"1d",
-		);
+// 		const token = await signToken(
+// 			{
+// 				userId: spotifyUser.id,
+// 				email: spotifyUser.email,
+// 			},
+// 			"1d",
+// 		);
 
-		const expiresAt = Date.now() + 23 * 60 * 60 * 1000; // expires in 23h
+// 		const expiresAt = Date.now() + 23 * 60 * 60 * 1000; // expires in 23h
 
-		logger.info(`Generated JWT for Spotify user ${spotifyUser.id}`);
+// 		logger.info(`Generated JWT for Spotify user ${spotifyUser.id}`);
 
-		res.status(200).json({ token, expiresAt });
-	} catch (err) {
-		logger.error("Failed to generate token from Spotify", err);
-		res.status(500).json({ error: "Failed to generate token" });
-	}
-});
+// 		res.status(200).json({ token, expiresAt });
+// 	} catch (err) {
+// 		logger.error("Failed to generate token from Spotify", err);
+// 		res.status(500).json({ error: "Failed to generate token" });
+// 	}
+// });
 
 app.get("/users/count", async (_, res) => {
 	const themeCount = await getUsers("theme");
