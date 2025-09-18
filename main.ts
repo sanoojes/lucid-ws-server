@@ -82,13 +82,13 @@ publicNamespace.on("connection", async (socket) => {
 
   socket.emit("userStats", {
     current: {
-      theme: themeCount,
-      extension: extensionCount,
+      lucid_theme: themeCount,
+      lyrics_extension: extensionCount,
       glassify_theme: glassifyCount,
     },
     weeklyAvg: {
-      theme: themeAvg,
-      extension: extensionAvg,
+      lucid_theme: themeAvg,
+      lyrics_extension: extensionAvg,
       glassify_theme: glassifyAvg,
     },
   });
@@ -200,13 +200,13 @@ app.get("/users/count", async (_, res) => {
 
   res.status(200).json({
     current: {
-      theme: themeCount,
-      extension: extensionCount,
+      lucid_theme: themeCount,
+      lyrics_extension: extensionCount,
       glassify_theme: glassifyCount,
     },
     weeklyAvg: {
-      theme: themeAvg,
-      extension: extensionAvg,
+      lucid_theme: themeAvg,
+      lyrics_extension: extensionAvg,
       glassify_theme: glassifyAvg,
     },
   });
