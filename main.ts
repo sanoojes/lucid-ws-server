@@ -24,6 +24,8 @@ const KEYS: Record<AnalyticType, string> = {
   glassify_theme: "glassify_theme_active_users",
 };
 
+const HISTORICAL_KEY_PREFIX = "lucid_activity";
+
 const CORS_OPTIONS = {
   origin: [
     "https://xpui.app.spotify.com",
@@ -67,28 +69,37 @@ try {
 // ====================== PUBLIC NAMESPACE ======================
 const publicNamespace = io.of("/ws/public");
 
-publicNamespace.on("connection", (socket) => {
-  logger.info(`Public user connected: ${socket.id}`);
+publicNamespace.on("connection", async (socket) => {
+  // logger.info(`Public user connected: ${socket.id}`);
 
-  (async () => {
-    const themeCount = await getUsers("theme");
-    const extensionCount = await getUsers("lyrics_extension");
-    const glassifyCount = await getUsers("glassify_theme");
+  const themeCount = await getUsers("theme");
+  const extensionCount = await getUsers("lyrics_extension");
+  const glassifyCount = await getUsers("glassify_theme");
 
-    socket.emit("userCount", {
+  const themeAvg = await getWeeklyAverage("theme");
+  const extensionAvg = await getWeeklyAverage("lyrics_extension");
+  const glassifyAvg = await getWeeklyAverage("glassify_theme");
+
+  socket.emit("userStats", {
+    current: {
       theme: themeCount,
       extension: extensionCount,
       glassify_theme: glassifyCount,
-    });
-
-    logger.info(
-      `Sent current counts to public user ${socket.id}: theme=${themeCount}, extension=${extensionCount}, glassify=${glassifyCount}`
-    );
-  })();
-
-  socket.on("disconnect", () => {
-    logger.info(`Public user disconnected: ${socket.id}`);
+    },
+    weeklyAvg: {
+      theme: themeAvg,
+      extension: extensionAvg,
+      glassify_theme: glassifyAvg,
+    },
   });
+
+  // logger.info(
+  //   `Sent stats to public user ${socket.id}: current=${themeCount},${extensionCount},${glassifyCount}, weeklyAvg=${themeAvg},${extensionAvg},${glassifyAvg}`
+  // );
+
+  // socket.on("disconnect", () => {
+  //   logger.info(`Public user disconnected: ${socket.id}`);
+  // });
 });
 
 // ====================== PRIVATE NAMESPACE ======================
@@ -118,12 +129,13 @@ privateNamespace.on("connection", async (socket) => {
     socket.handshake.auth?.type ?? "lyrics_extension";
 
   await incrementUsers(userType);
-  logger.info(`User connected: ${socket.id}, Type=${userType}}`);
+  await logUserActivity(userType);
+  // logger.info(`User connected: ${socket.id}, Type=${userType}}`);
 
   socket.on("disconnect", async () => {
-    if (userType) await decrementUsers(userType);
-
-    logger.info(`User disconnected: ${socket.id}`);
+    await decrementUsers(userType);
+    await logUserActivity(userType);
+    // logger.info(`User disconnected: ${socket.id}`);
   });
 });
 
@@ -182,15 +194,26 @@ app.get("/users/count", async (_, res) => {
   const extensionCount = await getUsers("lyrics_extension");
   const glassifyCount = await getUsers("glassify_theme");
 
+  const themeAvg = await getWeeklyAverage("theme");
+  const extensionAvg = await getWeeklyAverage("lyrics_extension");
+  const glassifyAvg = await getWeeklyAverage("glassify_theme");
+
   res.status(200).json({
-    theme: themeCount,
-    extension: extensionCount,
-    glassify_theme: glassifyCount,
+    current: {
+      theme: themeCount,
+      extension: extensionCount,
+      glassify_theme: glassifyCount,
+    },
+    weeklyAvg: {
+      theme: themeAvg,
+      extension: extensionAvg,
+      glassify_theme: glassifyAvg,
+    },
   });
 
-  logger.info(
-    `Returned active users count: theme=${themeCount}, extension=${extensionCount}, glassify=${glassifyCount}`
-  );
+  // logger.info(
+  //   `Returned stats: current=${themeCount},${extensionCount},${glassifyCount}, weeklyAvg=${themeAvg},${extensionAvg},${glassifyAvg}`
+  // );
 });
 
 httpServer.listen(PORT, () => {
@@ -254,3 +277,21 @@ const incrementUsers = (type: AnalyticType) =>
 const decrementUsers = (type: AnalyticType) =>
   updateUsersCount(type, "decrement");
 const getUsers = (type: AnalyticType) => updateUsersCount(type, "get");
+
+async function logUserActivity(type: AnalyticType) {
+  const key = `${HISTORICAL_KEY_PREFIX}:${type}`;
+  const timestamp = Date.now();
+  await client.zAdd(key, { score: timestamp, value: String(timestamp) });
+
+  const oneWeekAgo = timestamp - 7 * 24 * 60 * 60 * 1000;
+  await client.zRemRangeByScore(key, 0, oneWeekAgo);
+}
+
+async function getWeeklyAverage(type: AnalyticType) {
+  const key = `${HISTORICAL_KEY_PREFIX}:${type}`;
+  const now = Date.now();
+  const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
+
+  const weeklyCount = await client.zCount(key, weekAgo, now);
+  return weeklyCount / 7;
+}
