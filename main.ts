@@ -220,21 +220,15 @@ httpServer.listen(PORT, () => {
   logger.info(`Server running on https://localhost:${PORT}`);
 });
 
-async function initializeUserCounts() {
-  try {
-    for (const type of Object.keys(KEYS) as AnalyticType[]) {
-      await client.set(KEYS[type], 0);
-      publicNamespace.emit(`${type}`, 0);
-    }
-  } catch (err) {
-    logger.error("Failed to initialize user counts", err);
-  }
-}
-
-await initializeUserCounts();
 type CountOperation = "increment" | "decrement" | "get";
 
-async function updateUsersCount(
+const localCache: Record<AnalyticType, number> = {
+  theme: 0,
+  lyrics_extension: 0,
+  glassify_theme: 0,
+};
+
+export async function updateUsersCount(
   type: AnalyticType,
   operation: CountOperation = "get"
 ) {
@@ -244,31 +238,39 @@ async function updateUsersCount(
     let count: number;
 
     switch (operation) {
-      case "increment":
-        count = await client.incr(key);
-        break;
+      case "increment": {
+        const res = await client.multi().incr(key).exec();
 
-      case "decrement":
-        count = Number((await client.get(key)) ?? 0);
-        if (count > 0) {
-          count = await client.decr(key);
-        } else {
-          count = 0; // prevent underflow
+        count = Number(res?.[0] ?? 0);
+        break;
+      }
+      case "decrement": {
+        const res = await client.multi().decr(key).exec();
+
+        count = Number(res?.[0] ?? 0);
+        if (count < 0) {
           await client.set(key, 0);
+          count = 0;
         }
         break;
-
-      default:
-        count = Number((await client.get(key)) ?? 0);
+      }
+      default: {
+        const value = await client.get(key);
+        count = Number(value ?? 0);
         break;
+      }
     }
 
-    if (operation !== "get") publicNamespace.emit(type, count);
+    localCache[type] = count;
+
+    if (operation !== "get") {
+      publicNamespace.emit(type, count);
+    }
 
     return count;
   } catch (err) {
     logger.error(`Failed to ${operation} ${type} active users`, err);
-    return 0;
+    return localCache[type]; // fallback to cache
   }
 }
 
@@ -278,20 +280,67 @@ const decrementUsers = (type: AnalyticType) =>
   updateUsersCount(type, "decrement");
 const getUsers = (type: AnalyticType) => updateUsersCount(type, "get");
 
-async function logUserActivity(type: AnalyticType) {
-  const key = `${HISTORICAL_KEY_PREFIX}:${type}`;
+export async function logUserActivity(type: AnalyticType, userId?: string) {
   const timestamp = Date.now();
-  await client.zAdd(key, { score: timestamp, value: String(timestamp) });
+  const key = `${HISTORICAL_KEY_PREFIX}:${type}`;
 
-  const oneWeekAgo = timestamp - 7 * 24 * 60 * 60 * 1000;
-  await client.zRemRangeByScore(key, 0, oneWeekAgo);
+  const dayKey = `${HISTORICAL_KEY_PREFIX}:${type}:${
+    new Date().toISOString().split("T")[0]
+  }`;
+
+  try {
+    const tx = client.multi();
+
+    tx.zAdd(key, { score: timestamp, value: String(timestamp) });
+
+    const oneWeekAgo = timestamp - 7 * 24 * 60 * 60 * 1000;
+    tx.zRemRangeByScore(key, 0, oneWeekAgo);
+
+    if (userId) {
+      tx.sAdd(dayKey, userId);
+      tx.expire(dayKey, 8 * 24 * 60 * 60); // keep 8 days
+    }
+
+    await tx.exec();
+  } catch (err) {
+    logger.error("Failed to log user activity", err);
+  }
 }
 
-async function getWeeklyAverage(type: AnalyticType) {
-  const key = `${HISTORICAL_KEY_PREFIX}:${type}`;
+export async function getWeeklyAverage(type: AnalyticType) {
   const now = Date.now();
   const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
+  const key = `${HISTORICAL_KEY_PREFIX}:${type}`;
 
-  const weeklyCount = await client.zCount(key, weekAgo, now);
-  return weeklyCount / 7;
+  try {
+    const weeklyCount = await client.zCount(key, weekAgo, now);
+    return weeklyCount / 7;
+  } catch (err) {
+    logger.error("Failed to get weekly average", err);
+    return 0;
+  }
+}
+
+export async function getWeeklyUniqueUsers(type: AnalyticType) {
+  const today = new Date();
+  let total = 0;
+
+  try {
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+
+      const dayKey = `${HISTORICAL_KEY_PREFIX}:${type}:${
+        date.toISOString().split("T")[0]
+      }`;
+
+      const count = await client.sCard(dayKey);
+      total += count;
+    }
+
+    return total / 7;
+  } catch (err) {
+    logger.error("Failed to get weekly unique users", err);
+    return 0;
+  }
 }
