@@ -14,26 +14,18 @@ interface ThemeConfig {
 }
 const THEMES: Record<string, ThemeConfig> = {
   lucid_theme: { key: "lucid_theme:users", name: "Lucid Theme" },
-  lyrics_extension: {
-    key: "lucid_lyrics:users",
-    name: "Lyrics Extension",
-  },
-  glassify_theme: {
-    key: "glassify_theme:users",
-    name: "Glassify Theme",
-  },
-  // new_theme: { key: "new_theme:users", name: "New Theme" },
+  lyrics_extension: { key: "lucid_lyrics:users", name: "Lyrics Extension" },
+  glassify_theme: { key: "glassify_theme:users", name: "Glassify Theme" },
 };
 
 const HISTORICAL_KEY_PREFIX = "lucid_activity";
-
 type AnalyticType = keyof typeof THEMES;
 
 // ====================== ENV ======================
 const env = Deno.env.toObject();
 
-if (!env.REDIS_URL || !env.JWT_SECRET) {
-  logger.error("Missing env in environment.");
+if (!env.REDIS_URL) {
+  logger.error("Missing required environment variables: REDIS_URL");
   Deno.exit(1);
 }
 
@@ -53,7 +45,7 @@ const CORS_OPTIONS = {
   methods: ["GET", "POST"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
-  maxAge: 60 * 60,
+  maxAge: 3600,
 };
 
 app.use(cors(CORS_OPTIONS));
@@ -64,7 +56,7 @@ const io = new Server(httpServer, { cors: CORS_OPTIONS, pingInterval: 30_000 });
 // ====================== REDIS ======================
 export const client = createClient({ url: env.REDIS_URL });
 client.on("connect", () => logger.info("Redis Client Connected"));
-client.on("disconnect", () => logger.error("Redis Client Disconnected"));
+client.on("disconnect", () => logger.warn("Redis Client Disconnected"));
 client.on("error", (err) => logger.error("Redis Client Error", err));
 
 try {
@@ -84,13 +76,11 @@ let weekDates: string[] = getLast7Days(todayISO);
 
 function getLast7Days(startISO: string): string[] {
   const base = new Date(startISO);
-  const keys: string[] = [];
-  for (let i = 0; i < 7; i++) {
+  return Array.from({ length: 7 }).map((_, i) => {
     const d = new Date(base);
     d.setDate(base.getDate() - i);
-    keys.push(formatDateISO(d));
-  }
-  return keys;
+    return formatDateISO(d);
+  });
 }
 
 setInterval(() => {
@@ -98,7 +88,7 @@ setInterval(() => {
   if (nowISO !== todayISO) {
     todayISO = nowISO;
     weekDates = getLast7Days(todayISO);
-    // logger.info("Rolled over daily ISO cache", todayISO);
+    logger.info("Rolled over daily ISO cache", todayISO);
   }
 }, 60 * 1000);
 
@@ -117,8 +107,9 @@ const decrementUsers = (type: AnalyticType) =>
   updateUsersCount(type, "decrement");
 const getUsers = (type: AnalyticType) => updateUsersCount(type, "get");
 
-// ====================== PUBLIC NAMESPACE ======================
+// ====================== NAMESPACES ======================
 const publicNamespace = io.of("/ws/public");
+const privateNamespace = io.of("/ws/users");
 
 publicNamespace.on("connection", async (socket) => {
   try {
@@ -137,12 +128,9 @@ publicNamespace.on("connection", async (socket) => {
     };
     socket.emit("userStats", stats);
   } catch (err) {
-    logger.error("Failed to send initial stats to public socket", err);
+    // logger.error("Failed to send initial stats to public socket", err);
   }
 });
-
-// ====================== PRIVATE NAMESPACE ======================
-const privateNamespace = io.of("/ws/users");
 
 privateNamespace.on("connection", async (socket) => {
   const userType: AnalyticType =
@@ -153,7 +141,7 @@ privateNamespace.on("connection", async (socket) => {
     await incrementUsers(userType);
     await logUserActivity(userType, userId);
   } catch (err) {
-    logger.error("Error handling new private connection", err);
+    // logger.error("Error handling new private connection", err);
   }
 
   socket.on("disconnect", async () => {
@@ -161,13 +149,13 @@ privateNamespace.on("connection", async (socket) => {
       await decrementUsers(userType);
       await logUserActivity(userType, userId);
     } catch (err) {
-      logger.error("Error handling disconnect", err);
+      // logger.error("Error handling disconnect", err);
     }
   });
 });
 
 // ====================== HTTP ENDPOINTS ======================
-app.get("/", (_, res) => res.send("Welcome to Lucid Analytics Server !"));
+app.get("/", (_, res) => res.send("Welcome to Lucid Analytics Server!"));
 app.get("/ping", (_, res) => res.status(200).send("pong!"));
 
 app.get("/users/count", async (_, res) => {
@@ -180,7 +168,6 @@ app.get("/users/count", async (_, res) => {
         ])
       )
     );
-
     const weeklyAvg = Object.fromEntries(
       await Promise.all(
         Object.keys(THEMES).map(async (t) => [
@@ -189,10 +176,9 @@ app.get("/users/count", async (_, res) => {
         ])
       )
     );
-
     res.status(200).json({ current, weeklyAvg });
   } catch (err) {
-    logger.error("Failed to return users/count", err);
+    // logger.error("Failed to return users/count", err);
     res.status(500).json({ error: "Failed to get stats" });
   }
 });
@@ -209,7 +195,7 @@ app.get("/users/weekly-unique", async (_, res) => {
     );
     res.status(200).json({ weeklyUniqueAvg });
   } catch (err) {
-    logger.error("Failed to return weekly unique users", err);
+    // logger.error("Failed to return weekly unique users", err);
     res.status(500).json({ error: "Failed to get weekly unique users" });
   }
 });
@@ -225,7 +211,6 @@ async function broadcastStats() {
         ])
       )
     );
-
     const weeklyAvg = Object.fromEntries(
       await Promise.all(
         Object.keys(THEMES).map(async (t) => [
@@ -234,7 +219,6 @@ async function broadcastStats() {
         ])
       )
     );
-
     publicNamespace.emit("userStats", {
       current,
       weeklyAvg,
@@ -245,8 +229,7 @@ async function broadcastStats() {
   }
 }
 
-const BROADCAST_INTERVAL_MS = 5_000;
-setInterval(broadcastStats, BROADCAST_INTERVAL_MS);
+setInterval(broadcastStats, 5_000);
 broadcastStats().catch((err) =>
   logger.error("Initial broadcastStats failed", err)
 );
@@ -280,12 +263,11 @@ export async function updateUsersCount(
       default:
         count = Number((await client.get(key)) ?? 0);
     }
-
     localCache[type] = count;
     if (operation !== "get") publicNamespace.emit(type, count);
     return count;
   } catch (err) {
-    logger.error(`Failed to ${operation} ${type} active users`, err);
+    // logger.error(`Failed to ${operation} ${type} active users`, err);
     return localCache[type];
   }
 }
@@ -309,7 +291,7 @@ export async function logUserActivity(type: AnalyticType, userId?: string) {
     tx.zRemRangeByScore(zKey, 0, oneWeekAgo);
     await tx.exec();
   } catch (err) {
-    logger.error("Failed to log user activity", err);
+    // logger.error("Failed to log user activity", err);
   }
 }
 
@@ -321,7 +303,7 @@ export async function getWeeklyAverage(type: AnalyticType) {
     const values = await client.mGet(keys);
     return values.reduce((sum, v) => sum + Number(v ?? 0), 0) / 7;
   } catch (err) {
-    logger.error("Failed to get weekly average", err);
+    // logger.error("Failed to get weekly average", err);
     return 0;
   }
 }
@@ -334,7 +316,7 @@ export async function getWeeklyUniqueUsers(type: AnalyticType) {
     const uniqueUsers = await client.sUnion(keys);
     return uniqueUsers.length;
   } catch (err) {
-    logger.error("Failed to get weekly unique users", err);
+    // logger.error("Failed to get weekly unique users", err);
     return 0;
   }
 }
@@ -347,3 +329,20 @@ async function cachedWeeklyAverage(type: AnalyticType) {
   weeklyCache.set(type, { value: avg, expiresAt: now + 60_000 });
   return avg;
 }
+
+// ====================== GRACEFUL SHUTDOWN ======================
+async function shutdown() {
+  try {
+    logger.info("Shutting down server...");
+    await client.quit();
+    io.close();
+    httpServer.close(() => logger.info("Server closed."));
+    Deno.exit();
+  } catch (err) {
+    logger.error("Error during shutdown", err);
+    Deno.exit(1);
+  }
+}
+
+Deno.addSignalListener("SIGINT", shutdown);
+Deno.addSignalListener("SIGTERM", shutdown);
