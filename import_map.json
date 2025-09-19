@@ -1,9 +1,0 @@
-{
-  "imports": {
-    "express": "npm:express@5.1.0/",
-    "cors": "npm:cors@2.8.5",
-    "redis": "npm:redis@5.8.2",
-    "socket.io": "npm:socket.io@4.8.1",
-    "socket.io/bun-engine": "npm:@socket.io/bun-engine@latest"
-  }
-}

@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import healthRoutes from "./routes/health.ts";
 import userRoutes from "./routes/users.ts";
+import { resolve } from "@std/path";
 
 const app = express();
 
@@ -21,8 +22,17 @@ const CORS_OPTIONS = {
 
 app.use(cors(CORS_OPTIONS));
 app.use(express.json());
+app.use(express.static("public"));
 
 app.use("/", healthRoutes);
 app.use("/users", userRoutes);
+
+app.get("/", (_, res) =>
+  res.status(404).sendFile(resolve("public/index.html"))
+);
+
+app.use((_, res) => {
+  res.status(404).sendFile(resolve("public/404.html"));
+});
 
 export default app;

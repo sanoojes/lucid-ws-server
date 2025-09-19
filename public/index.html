@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Spicetify Analytics Server | Insights & Dashboard | Sanooj</title>
+    <meta
+      name="description"
+      content="Welcome to Spicetify Analytics Server! View analytics, trends, and insights for your Spicetify experience. Access documentation and GitHub repo."
+    />
+    <meta
+      name="keywords"
+      content="Spicetify, Analytics, Dashboard, Insights, Music, Projects, GitHub, Documentation"
+    />
+    <meta name="author" content="Sanooj" />
+
+    <meta property="og:title" content="Spicetify Analytics Server" />
+    <meta
+      property="og:description"
+      content="Welcome to Spicetify Analytics Server! View analytics, trends, and insights for your Spicetify experience."
+    />
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:url"
+      content="https://analytics.spicetify.projects.sanooj.uk/"
+    />
+
+    <style>
+      /* Reset & common */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root[data-theme="dark"] {
+        --surface: #0c0f09;
+        --surface-low: #1a1c16;
+        --surface-high: #1e201a;
+        --surface-highest: #282b24;
+
+        --text: #e2e3d8;
+        --text-muted: #c5c8ba;
+        --text-subtle: #bbb;
+
+        --primary-bg: #354e16;
+        --primary-text: #cdeda3;
+        --primary-hover: #4b6b20;
+
+        --secondary-bg: #2e3b4e;
+        --secondary-text: #b0c7e2;
+        --secondary-hover: #41526d;
+
+        --tertiary-bg: #4a2c2c;
+        --tertiary-text: #f0cfcf;
+        --tertiary-hover: #5e3a3a;
+      }
+
+      :root[data-theme="light"] {
+        --surface: #f3f4e9;
+        --surface-low: #eeefe3;
+        --surface-high: #e8e9de;
+        --surface-highest: #e2e3d8;
+
+        --text: #1a1c16;
+        --text-muted: #44483d;
+        --text-subtle: #75796c;
+
+        --primary-bg: #e0f2d9;
+        --primary-text: #1c3a1c;
+        --primary-hover: #c6e8b7;
+
+        --secondary-bg: #dce5f1;
+        --secondary-text: #1d2f4d;
+        --secondary-hover: #c3d4eb;
+
+        --tertiary-bg: #f7e2e2;
+        --tertiary-text: #5a2c2c;
+        --tertiary-hover: #f0cfcf;
+      }
+
+      body {
+        font-family: system-ui, sans-serif;
+        background: linear-gradient(
+          to right,
+          var(--surface),
+          var(--surface-low)
+        );
+        color: var(--text);
+        line-height: 1.6;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 2rem;
+        min-height: 100vh;
+        transition: background 0.3s ease, color 0.3s ease;
+      }
+
+      header {
+        text-align: center;
+        margin-top: 3rem;
+        margin-bottom: 2rem;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+      }
+
+      header p {
+        color: var(--text-muted);
+        margin-top: 0.5rem;
+      }
+
+      main {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        position: absolute;
+        top: 40%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      section {
+        display: grid;
+        gap: 8px;
+        max-width: 500px;
+        width: 100%;
+      }
+
+      .card {
+        background: var(--surface-high);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        transition: transform 0.2s ease, background 0.2s ease;
+      }
+
+      .card:hover {
+        transform: translateY(-4px);
+        background: var(--surface-highest);
+      }
+
+      .card h2 {
+        font-size: 1.25rem;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+      }
+
+      .card p {
+        font-size: 1rem;
+        font-weight: bold;
+      }
+
+      a.button {
+        display: inline-block;
+        margin: 0;
+        padding: 12px 25px;
+        background-color: var(--primary-bg);
+        color: var(--primary-text);
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: bold;
+        text-align: center;
+        transition: background-color 0.3s;
+      }
+
+      a.button:hover {
+        background-color: var(--primary-hover);
+      }
+
+      footer {
+        margin-top: auto;
+        text-align: center;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+      }
+
+      footer a {
+        color: var(--text-muted);
+        text-decoration: none;
+      }
+
+      footer a:hover {
+        color: var(--text);
+      }
+
+      .theme-toggle {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border: 1px solid var(--surface-highest);
+        border-radius: 12px;
+        background-color: var(--primary-bg);
+        color: var(--primary-text);
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        z-index: 10;
+      }
+
+      .theme-toggle:hover {
+        background-color: var(--primary-hover);
+      }
+    </style>
+  </head>
+
+  <body>
+    <button class="theme-toggle" id="themeToggle">Toggle Theme</button>
+
+    <main>
+      <header>
+        <h1>Welcome to Spicetify Analytics Server!</h1>
+        <p>
+          Explore insights, trends, and analytics for your Spicetify experience.
+        </p>
+      </header>
+      <section>
+        <a
+          class="button"
+          href="https://spicetify.projects.sanooj.uk/"
+          target="_blank"
+          rel="noopener"
+          >View Analytics</a
+        >
+        <a
+          class="button"
+          href="https://projects.sanooj.uk/backend/spicetify-analytics/"
+          target="_blank"
+          rel="noopener"
+          >Documentation</a
+        >
+        <a
+          class="button"
+          href="https://github.com/sanoojes/spicetify-analytics/"
+          target="_blank"
+          rel="noopener"
+          >GitHub Repo</a
+        >
+      </section>
+    </main>
+    <footer>
+      <p>&copy; <span id="year"></span> Sanooj. All rights reserved.</p>
+    </footer>
+
+    <script>
+      // Theme setup
+      const darkSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-moon"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>`;
+      const lightSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
+      const autoSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-monitor-icon lucide-monitor"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>`;
+      const toggleBtn = document.getElementById("themeToggle");
+      const rootEl = document.documentElement;
+
+      const themes = ["light", "dark", "auto"];
+      let currentIndex = themes.indexOf(rootEl.dataset.theme) || 0;
+
+      function applyTheme(theme) {
+        if (theme === "auto") {
+          const prefersDark = window.matchMedia(
+            "(prefers-color-scheme: dark)"
+          ).matches;
+          rootEl.dataset.theme = prefersDark ? "dark" : "light";
+        } else {
+          rootEl.dataset.theme = theme;
+        }
+      }
+
+      function updateBtnText() {
+        const currentTheme = themes[currentIndex];
+        let icon, text;
+
+        if (currentTheme === "dark") {
+          icon = lightSvg;
+          text = "Light";
+        } else if (currentTheme === "light") {
+          icon = darkSvg;
+          text = "Dark";
+        } else {
+          icon = autoSvg;
+          text = "Auto";
+        }
+
+        toggleBtn.innerHTML = `${icon} <p>${text}</p>`;
+        applyTheme(currentTheme);
+      }
+
+      toggleBtn.addEventListener("click", () => {
+        currentIndex = (currentIndex + 1) % themes.length;
+        updateBtnText();
+      });
+
+      applyTheme();
+      updateBtnText();
+
+      window
+        .matchMedia("(prefers-color-scheme: dark)")
+        .addEventListener("change", () => {
+          if (themes[currentIndex] === "auto") applyTheme("auto");
+        });
+
+      // Dynamic year
+      document.getElementById("year").textContent = new Date().getFullYear();
+    </script>
+  </body>
+</html>
