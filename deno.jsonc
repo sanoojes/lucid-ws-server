@@ -1,1 +1,12 @@
-{}
+{
+  "compilerOptions": {
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "tasks": {
+    "dev": "deno run -A --env-file --watch src/index.ts",
+    "start": "deno run -A src/index.ts"
+  },
+  "importMap": "import_map.json"
+}
