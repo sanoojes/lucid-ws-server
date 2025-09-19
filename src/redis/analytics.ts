@@ -17,12 +17,13 @@ setInterval(() => {
 	}
 }, 60 * 1000);
 
-export const localCache: Record<AnalyticType, number> = Object.keys(
-	THEMES,
-).reduce(
-	(acc, theme) => ({ ...acc, [theme]: 0 }),
-	{} as Record<AnalyticType, number>,
-);
+export const localCache: Record<AnalyticType, number> = {} as Record<
+	AnalyticType,
+	number
+>;
+for (const type of Object.keys(THEMES) as AnalyticType[]) {
+	localCache[type] = 0;
+}
 
 export async function initializeLocalCache() {
 	for (const type of Object.keys(THEMES) as AnalyticType[]) {
@@ -71,11 +72,11 @@ export async function logUserActivity(type: AnalyticType, userId?: string) {
 	const tx = client.multi();
 	tx.zAdd(zKey, { score: timestamp, value: String(timestamp) });
 	tx.incr(dailyKey);
-	tx.expire(dailyKey, 8 * 24 * 60 * 60); // 8 days
+	tx.expire(dailyKey, 7 * 24 * 60 * 60);
 
 	if (userId) {
 		tx.sAdd(dayUniqueKey, userId);
-		tx.expire(dayUniqueKey, 8 * 24 * 60 * 60); // 8 days
+		tx.expire(dayUniqueKey, 7 * 24 * 60 * 60);
 		tx.sAdd(allTimeKey, userId);
 	}
 
@@ -87,14 +88,27 @@ export async function logUserActivity(type: AnalyticType, userId?: string) {
 
 export async function getAllTimeUniqueUsers(type: AnalyticType) {
 	const allTimeKey = `${HISTORICAL_KEY_PREFIX}:${type}:unique:alltime`;
-	const users = await client.sCard(allTimeKey);
-	return users;
+	try {
+		return await client.sCard(allTimeKey);
+	} catch {
+		return 0;
+	}
 }
 
 export async function getWeeklyUniqueUsers(type: AnalyticType) {
 	const keys = weekDates.map(
 		(date) => `${HISTORICAL_KEY_PREFIX}:${type}:unique:${date}`,
 	);
-	const uniqueUsers = await client.sUnion(keys);
-	return uniqueUsers.length;
+
+	if (keys.length === 0) return 0;
+
+	const tempKey = `${HISTORICAL_KEY_PREFIX}:${type}:unique:weekly:${todayISO}`;
+
+	try {
+		await client.sUnionStore(tempKey, keys);
+		await client.expire(tempKey, 60);
+		return await client.sCard(tempKey);
+	} catch {
+		return 0;
+	}
 }
