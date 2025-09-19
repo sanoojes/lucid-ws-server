@@ -8,7 +8,7 @@ import { Server } from "socket.io";
 // import { signToken, verifyToken } from "./lib/jwt.ts";
 import logger from "./lib/logger.ts";
 
-type AnalyticType = "theme" | "lyrics_extension" | "glassify_theme";
+type AnalyticType = "lucid_theme" | "lyrics_extension" | "glassify_theme";
 
 const env = Deno.env.toObject();
 
@@ -19,7 +19,7 @@ if (!env.REDIS_URL || !env.JWT_SECRET) {
 
 // Redis keys mapping
 const KEYS: Record<AnalyticType, string> = {
-  theme: "lucid_theme_active_users",
+  lucid_theme: "lucid_theme_active_users",
   lyrics_extension: "lucid_lyrics_active_users",
   glassify_theme: "glassify_theme_active_users",
 };
@@ -72,11 +72,11 @@ const publicNamespace = io.of("/ws/public");
 publicNamespace.on("connection", async (socket) => {
   // logger.info(`Public user connected: ${socket.id}`);
 
-  const themeCount = await getUsers("theme");
+  const themeCount = await getUsers("lucid_theme");
   const extensionCount = await getUsers("lyrics_extension");
   const glassifyCount = await getUsers("glassify_theme");
 
-  const themeAvg = await getWeeklyAverage("theme");
+  const themeAvg = await getWeeklyAverage("lucid_theme");
   const extensionAvg = await getWeeklyAverage("lyrics_extension");
   const glassifyAvg = await getWeeklyAverage("glassify_theme");
 
@@ -190,11 +190,11 @@ app.get("/ping", (_, res) => {
 // });
 
 app.get("/users/count", async (_, res) => {
-  const themeCount = await getUsers("theme");
+  const themeCount = await getUsers("lucid_theme");
   const extensionCount = await getUsers("lyrics_extension");
   const glassifyCount = await getUsers("glassify_theme");
 
-  const themeAvg = await getWeeklyAverage("theme");
+  const themeAvg = await getWeeklyAverage("lucid_theme");
   const extensionAvg = await getWeeklyAverage("lyrics_extension");
   const glassifyAvg = await getWeeklyAverage("glassify_theme");
 
@@ -223,7 +223,7 @@ httpServer.listen(PORT, () => {
 type CountOperation = "increment" | "decrement" | "get";
 
 const localCache: Record<AnalyticType, number> = {
-  theme: 0,
+  lucid_theme: 0,
   lyrics_extension: 0,
   glassify_theme: 0,
 };
