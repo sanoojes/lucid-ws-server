@@ -66,6 +66,7 @@ export async function logUserActivity(type: AnalyticType, userId?: string) {
   const zKey = `${HISTORICAL_KEY_PREFIX}:${type}`;
   const dailyKey = `${HISTORICAL_KEY_PREFIX}:${type}:daily:${todayISO}`;
   const dayUniqueKey = `${HISTORICAL_KEY_PREFIX}:${type}:unique:${todayISO}`;
+  const allTimeKey = `${HISTORICAL_KEY_PREFIX}:${type}:unique:alltime`;
 
   const tx = client.multi();
   tx.zAdd(zKey, { score: timestamp, value: String(timestamp) });
@@ -74,13 +75,20 @@ export async function logUserActivity(type: AnalyticType, userId?: string) {
 
   if (userId) {
     tx.sAdd(dayUniqueKey, userId);
-    tx.expire(dayUniqueKey, 8 * 24 * 60 * 60);
+    tx.expire(dayUniqueKey, 8 * 24 * 60 * 60); // 8 days
+    tx.sAdd(allTimeKey, userId);
   }
 
   const oneWeekAgo = timestamp - 7 * 24 * 60 * 60 * 1000;
   tx.zRemRangeByScore(zKey, 0, oneWeekAgo);
 
   await tx.exec();
+}
+
+export async function getAllTimeUniqueUsers(type: AnalyticType) {
+  const allTimeKey = `${HISTORICAL_KEY_PREFIX}:${type}:unique:alltime`;
+  const users = await client.sCard(allTimeKey);
+  return users;
 }
 
 export async function getWeeklyUniqueUsers(type: AnalyticType) {
