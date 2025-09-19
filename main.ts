@@ -13,7 +13,7 @@ interface ThemeConfig {
   name: string;
 }
 const THEMES: Record<string, ThemeConfig> = {
-  lucid_theme: { key: "lucid_theme:users", name: "Lucid Theme" },
+  theme: { key: "lucid_theme:users", name: "Lucid Theme" },
   lyrics_extension: { key: "lucid_lyrics:users", name: "Lyrics Extension" },
   glassify_theme: { key: "glassify_theme:users", name: "Glassify Theme" },
 };
