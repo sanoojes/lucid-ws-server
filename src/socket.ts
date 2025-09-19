@@ -61,7 +61,6 @@ export async function initSockets(httpServer: any) {
 		socket.on("disconnect", async () => {
 			activeSockets[userType].delete(socket.id);
 			await updateUsersCount(userType, "decrement");
-			await logUserActivity(userType, userId);
 		});
 	});
 
