@@ -6,7 +6,7 @@ import userRoutes from "./routes/users.ts";
 
 const app = express();
 
-const CORS_OPTIONS = {
+export const CORS_OPTIONS = {
 	origin: [
 		"https://xpui.app.spotify.com",
 		"https://spicetify-projects.sanooj.uk",
