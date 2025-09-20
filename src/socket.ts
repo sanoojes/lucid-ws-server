@@ -89,7 +89,7 @@ export async function initSockets(httpServer: any) {
 			unique,
 			timestamp: Date.now(),
 		});
-	}, 2000);
+	}, 3000);
 
 	// --- Periodic Redis sync ---
 	setInterval(async () => {
