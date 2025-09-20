@@ -10,6 +10,7 @@ const CORS_OPTIONS = {
 	origin: [
 		"https://xpui.app.spotify.com",
 		"https://spicetify-projects.sanooj.uk",
+		"https://analytics-spicetify-projects.sanooj.uk",
 		"http://localhost:8787",
 	],
 	methods: ["GET", "POST"],
