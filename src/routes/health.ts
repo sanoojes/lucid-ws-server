@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { type AnalyticType, THEMES } from "../config/themes.ts";
+import { type AnalyticType, APP } from "../config/themes.ts";
 import { requireAdminKey } from "../middlewares/admin.ts";
 import { localCache } from "../redis/analytics.ts";
 import { client } from "../redis/client.ts";
@@ -10,7 +10,7 @@ router.get("/ping", (_, res) => res.send("pong!"));
 router.post("/admin/clear", requireAdminKey, async (_, res) => {
 	try {
 		await client.flushDb();
-		for (const type of Object.keys(THEMES) as AnalyticType[]) {
+		for (const type of Object.keys(APP) as AnalyticType[]) {
 			localCache[type] = 0;
 		}
 		res.json({ success: true, message: "Database cleared" });

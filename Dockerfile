@@ -1,16 +1,12 @@
+FROM oven/bun:latest
 
-FROM denoland/deno:latest
+WORKDIR /usr/src/app
 
-# Create working directory
-WORKDIR /app
-
-# Copy source
 COPY . .
 
-RUN deno install
+RUN bun install
 
 ARG PORT
-EXPOSE ${PORT:-8080}
+EXPOSE ${PORT:-3000}
 
-# Run the app
-CMD ["deno", "task", "start"]
+CMD ["bun", "run", "start"]

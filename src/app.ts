@@ -1,4 +1,4 @@
-import { resolve } from "@std/path";
+import { resolve } from "node:path";
 import cors from "cors";
 import express from "express";
 import healthRoutes from "./routes/health.ts";

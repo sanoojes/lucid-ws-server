@@ -1,7 +1,7 @@
 import { createClient } from "redis";
 import logger from "../utils/logger.ts";
 
-export const client = createClient({ url: Deno.env.get("REDIS_URL") });
+export const client = createClient({ url: process.env.REDIS_URL });
 
 client.on("connect", () => logger.info("Redis Client Connected"));
 client.on("disconnect", () => logger.warn("Redis Client Disconnected"));

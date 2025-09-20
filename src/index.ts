@@ -3,12 +3,12 @@ import app from "./app.ts";
 import { initSockets } from "./socket.ts";
 import logger from "./utils/logger.ts";
 
-if (!Deno.env.get("REDIS_URL")) {
+if (!process.env.REDIS_URL) {
 	logger.error("Missing required environment variables: REDIS_URL");
-	Deno.exit(1);
+	process.exit(1);
 }
 
-const PORT = Number(Deno.env.get("PORT") ?? 8989);
+const PORT = Number(process.env.PORT ?? 3000);
 const httpServer = createServer(app);
 
 initSockets(httpServer);

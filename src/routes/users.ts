@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { type AnalyticType, THEMES } from "../config/themes.ts";
+import { type AnalyticType, APP } from "../config/themes.ts";
 import {
 	getAllTimeUniqueUsers,
 	getWeeklyUniqueUsers,
@@ -11,7 +11,7 @@ const router = Router();
 router.get("/count", async (_, res) => {
 	try {
 		const combinedEntries = await Promise.all(
-			Object.keys(THEMES).map(async (t) => {
+			Object.keys(APP).map(async (t) => {
 				const [weeklyUnique, allTimeUnique, count] = await Promise.all([
 					getWeeklyUniqueUsers(t as AnalyticType),
 					getAllTimeUniqueUsers(t as AnalyticType),

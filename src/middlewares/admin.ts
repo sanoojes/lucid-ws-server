@@ -6,7 +6,7 @@ export function requireAdminKey(
 	next: NextFunction,
 ) {
 	const authHeader = req.headers["authorization"];
-	const adminKey = Deno.env.get("ADMIN_KEY");
+	const adminKey = process.env.ADMIN_KEY;
 
 	if (!adminKey) {
 		return res
