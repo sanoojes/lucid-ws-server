@@ -11,7 +11,6 @@ import {
 import { CORS_OPTIONS } from "./app.ts";
 
 const KEYS = Object.keys(APP);
-
 export async function initSockets(httpServer: any) {
 	await initializeLocalCache();
 	const io = new Server(httpServer, {
