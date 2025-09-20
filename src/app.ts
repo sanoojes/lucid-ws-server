@@ -9,9 +9,7 @@ const app = express();
 const CORS_OPTIONS = {
 	origin: [
 		"https://xpui.app.spotify.com",
-		"https://lyrics.lucid.sanooj.is-a.dev",
-		"https://lucid.sanooj.is-a.dev",
-		"https://spicetify.projects.sanooj.uk",
+		"https://spicetify-projects.sanooj.uk",
 		"http://localhost:8787",
 	],
 	methods: ["GET", "POST"],
